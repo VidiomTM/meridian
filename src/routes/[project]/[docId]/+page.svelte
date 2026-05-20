@@ -27,7 +27,6 @@
 
 <DocView
 	doc={data.doc}
-	byId={data.byId ?? {}}
 	onOpenGraph={openGraph}
 	onOpenHistory={openHistory}
 />

@@ -2,7 +2,6 @@
 	import { invalidate } from '$app/navigation';
 	import type { MeridianDoc } from '$lib/meridian/format.js';
 	import { extractSubtitle } from '$lib/meridian/parser.js';
-	import { KIND_LABELS } from '$lib/meridian/format.js';
 	import StatusChip from './StatusChip.svelte';
 
 	let {
@@ -11,7 +10,6 @@
 		onOpenHistory
 	}: {
 		doc: MeridianDoc;
-		byId: Record<string, MeridianDoc>;
 		onOpenGraph: () => void;
 		onOpenHistory: () => void;
 	} = $props();
@@ -103,7 +101,7 @@
 					<span class="doc-date">{doc.date}</span>
 				{/if}
 				<span class="spacer"></span>
-				<span class="meta-tag">{KIND_LABELS[doc.kind]}</span>
+				<span class="meta-tag">{doc.kind}</span>
 			</div>
 		</div>
 
