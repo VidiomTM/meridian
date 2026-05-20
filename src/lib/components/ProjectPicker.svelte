@@ -1,19 +1,20 @@
 <script lang="ts">
-	import type { ProjectSummary } from '$lib/meridian/corpus.js';
-	let { projects } = $props<{ projects: ProjectSummary[] }>();
+import type { ProjectSummary } from '$lib/meridian/corpus.js';
 
-	function relativeDate(dateStr: string): string {
-		if (!dateStr) return '';
-		const d = new Date(dateStr);
-		const now = new Date();
-		const days = Math.floor((now.getTime() - d.getTime()) / 86400000);
-		if (days === 0) return 'today';
-		if (days === 1) return 'yesterday';
-		if (days < 7) return `${days}d ago`;
-		if (days < 30) return `${Math.floor(days / 7)}w ago`;
-		if (days < 365) return `${Math.floor(days / 30)}mo ago`;
-		return `${Math.floor(days / 365)}y ago`;
-	}
+let { projects } = $props<{ projects: ProjectSummary[] }>();
+
+function relativeDate(dateStr: string): string {
+	if (!dateStr) return '';
+	const d = new Date(dateStr);
+	const now = new Date();
+	const days = Math.floor((now.getTime() - d.getTime()) / 86400000);
+	if (days === 0) return 'today';
+	if (days === 1) return 'yesterday';
+	if (days < 7) return `${days}d ago`;
+	if (days < 30) return `${Math.floor(days / 7)}w ago`;
+	if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+	return `${Math.floor(days / 365)}y ago`;
+}
 </script>
 
 <main class="picker-main" id="doc-main" tabindex="-1">

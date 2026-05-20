@@ -1,4 +1,4 @@
-import type { MeridianDoc, InvEntry } from './format.js';
+import type { InvEntry, MeridianDoc } from './format.js';
 
 export type InvIndex = Map<string, InvEntry>;
 
@@ -10,7 +10,7 @@ export function buildInvIndex(docs: MeridianDoc[]): InvIndex {
 			inv.set(id, {
 				contained_by: [],
 				contains_inv: [],
-				related_from: []
+				related_from: [],
 			});
 		}
 		return inv.get(id)!;
@@ -48,7 +48,10 @@ export interface GraphEdge {
 	kind: 'contains' | 'part_of' | 'related';
 }
 
-export function buildGraph(docs: MeridianDoc[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
+export function buildGraph(docs: MeridianDoc[]): {
+	nodes: GraphNode[];
+	edges: GraphEdge[];
+} {
 	const nodes: GraphNode[] = docs.map((doc, i) => ({
 		id: doc.id,
 		kind: doc.kind,
@@ -57,7 +60,7 @@ export function buildGraph(docs: MeridianDoc[]): { nodes: GraphNode[]; edges: Gr
 		x: 400 + Math.cos((i / docs.length) * Math.PI * 2) * 200,
 		y: 300 + Math.sin((i / docs.length) * Math.PI * 2) * 200,
 		vx: 0,
-		vy: 0
+		vy: 0,
 	}));
 
 	const edges: GraphEdge[] = [];
@@ -86,7 +89,7 @@ export function runForceSimulation(
 	edges: GraphEdge[],
 	width: number,
 	height: number,
-	iterations = 200
+	iterations = 200,
 ): GraphNode[] {
 	const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 	const cx = width / 2;
@@ -94,8 +97,16 @@ export function runForceSimulation(
 
 	// Initialize positions in a circle
 	nodes.forEach((n, i) => {
-		n.x = cx + Math.cos((i / nodes.length) * Math.PI * 2) * Math.min(width, height) * 0.35;
-		n.y = cy + Math.sin((i / nodes.length) * Math.PI * 2) * Math.min(width, height) * 0.35;
+		n.x =
+			cx +
+			Math.cos((i / nodes.length) * Math.PI * 2) *
+				Math.min(width, height) *
+				0.35;
+		n.y =
+			cy +
+			Math.sin((i / nodes.length) * Math.PI * 2) *
+				Math.min(width, height) *
+				0.35;
 		n.vx = 0;
 		n.vy = 0;
 	});

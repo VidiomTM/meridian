@@ -1,12 +1,13 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { writeFile } from 'fs/promises';
-import { basename, dirname, join, relative, sep } from 'path';
 import matter from 'gray-matter';
-import { buildInvIndex } from './relations.js';
-import { extractTitle, renderMarkdown, splitFrontmatter } from './parser.js';
+import { basename, dirname, join, relative, sep } from 'path';
 import type { DocKind, DocStatus, MeridianDoc } from './format.js';
+import { extractTitle, renderMarkdown, splitFrontmatter } from './parser.js';
+import { buildInvIndex } from './relations.js';
 
-const CODEX_ROOT = process.env.CODEX_ROOT ?? '/Users/jonathangadeaharder/projects';
+const CODEX_ROOT =
+	process.env.CODEX_ROOT ?? '/Users/jonathangadeaharder/projects';
 const ARTIFACT_FILES = new Set(['proposal.md', 'design.md', 'tasks.md']);
 
 function walkDir(dir: string, ext = '.md'): string[] {
@@ -62,7 +63,17 @@ function getChangeName(parts: string[]): string | null {
 	return parts[changesIdx + 1] ?? null;
 }
 
-function classifyOpenSpec(filePath: string, openspecRoot: string): { id: string; kind: DocKind; status: DocStatus; tags: string[]; groupId?: string; contentType?: 'markdown' | 'yaml' } | null {
+function classifyOpenSpec(
+	filePath: string,
+	openspecRoot: string,
+): {
+	id: string;
+	kind: DocKind;
+	status: DocStatus;
+	tags: string[];
+	groupId?: string;
+	contentType?: 'markdown' | 'yaml';
+} | null {
 	const rel = relative(openspecRoot, filePath);
 	const parts = rel.split(sep);
 	const filename = basename(filePath);
@@ -73,20 +84,25 @@ function classifyOpenSpec(filePath: string, openspecRoot: string): { id: string;
 			kind: 'note',
 			status: 'canonical',
 			tags: ['openspec', 'config'],
-			contentType: 'yaml'
+			contentType: 'yaml',
 		};
 	}
 
 	if (parts[0] === 'specs') {
 		const specName = slug(parts.slice(1).join('-'));
-		const importedKind = parts[1] === 'imported' && ['adr', 'spec', 'tdd'].includes(parts[2] ?? '')
-			? parts[2] as 'adr' | 'spec' | 'tdd'
-			: 'spec';
+		const importedKind =
+			parts[1] === 'imported' && ['adr', 'spec', 'tdd'].includes(parts[2] ?? '')
+				? (parts[2] as 'adr' | 'spec' | 'tdd')
+				: 'spec';
 		return {
 			id: `spec-${specName}`,
 			kind: importedKind,
 			status: 'canonical',
-			tags: ['openspec', importedKind, ...(parts[1] === 'imported' ? ['imported'] : [])]
+			tags: [
+				'openspec',
+				importedKind,
+				...(parts[1] === 'imported' ? ['imported'] : []),
+			],
 		};
 	}
 
@@ -102,13 +118,18 @@ function classifyOpenSpec(filePath: string, openspecRoot: string): { id: string;
 	const groupId = `change-${changeSlug}`;
 
 	if (ARTIFACT_FILES.has(filename)) {
-		const kind = filename === 'proposal.md' ? 'proposal' : filename === 'design.md' ? 'design' : 'tasks';
+		const kind =
+			filename === 'proposal.md'
+				? 'proposal'
+				: filename === 'design.md'
+					? 'design'
+					: 'tasks';
 		return {
 			id: `${groupId}-${kind}`,
 			kind,
 			status,
 			tags,
-			groupId
+			groupId,
 		};
 	}
 
@@ -120,7 +141,7 @@ function classifyOpenSpec(filePath: string, openspecRoot: string): { id: string;
 			kind: 'spec',
 			status,
 			tags: [...tags, 'delta'],
-			groupId
+			groupId,
 		};
 	}
 
@@ -138,7 +159,13 @@ function findOpenSpecRoots(dir: string): string[] {
 	const roots: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (!entry.isDirectory()) continue;
-		if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'build') continue;
+		if (
+			entry.name.startsWith('.') ||
+			entry.name === 'node_modules' ||
+			entry.name === 'dist' ||
+			entry.name === 'build'
+		)
+			continue;
 		const full = join(dir, entry.name);
 		if (entry.name === 'openspec') {
 			roots.push(full);
@@ -159,7 +186,8 @@ function collectOpenSpecArtifacts(): RawArtifact[] {
 		const configPath = join(openspecRoot, 'config.yaml');
 		if (existsSync(configPath)) {
 			const classification = classifyOpenSpec(configPath, openspecRoot);
-			if (classification) artifacts.push({ path: configPath, project, classification });
+			if (classification)
+				artifacts.push({ path: configPath, project, classification });
 		}
 
 		for (const filePath of walkDir(openspecRoot)) {
@@ -175,7 +203,10 @@ function collectOpenSpecArtifacts(): RawArtifact[] {
 export interface Corpus {
 	docs: MeridianDoc[];
 	byId: Record<string, MeridianDoc>;
-	inv: Record<string, ReturnType<typeof buildInvIndex> extends Map<string, infer V> ? V : never>;
+	inv: Record<
+		string,
+		ReturnType<typeof buildInvIndex> extends Map<string, infer V> ? V : never
+	>;
 }
 
 let _cache: Corpus | null = null;
@@ -183,29 +214,47 @@ let _cacheCreatedAt = 0;
 const CACHE_TTL_MS = 1000;
 
 export function loadCorpus(force = false): Corpus {
-	if (_cache && !force && Date.now() - _cacheCreatedAt < CACHE_TTL_MS) return _cache;
+	if (_cache && !force && Date.now() - _cacheCreatedAt < CACHE_TTL_MS)
+		return _cache;
 
-	const byIdMap = new Map<string, { status: DocStatus; title: string; project?: string }>();
+	const byIdMap = new Map<
+		string,
+		{ status: DocStatus; title: string; project?: string }
+	>();
 	const firstPassDocs: MeridianDoc[] = [];
 	const seen = new Map<string, number>();
 
 	for (const artifact of collectOpenSpecArtifacts()) {
 		const content = readFileSync(artifact.path, 'utf-8');
 		const contentType = artifact.classification.contentType ?? 'markdown';
-		const { data, rawBody } = contentType === 'yaml' ? { data: {}, rawBody: content.trim() } : splitFrontmatter(content);
-		const fallbackTitle = contentType === 'yaml'
-			? 'OpenSpec Config'
-			: artifact.classification.kind === 'spec'
-			? titleFromSlug(basename(artifact.path))
-			: titleFromSlug(artifact.classification.kind);
-		const title = contentType === 'yaml' ? fallbackTitle : typeof data.title === 'string' ? data.title : extractTitle(rawBody, fallbackTitle);
-		const description = typeof data.description === 'string' ? data.description : undefined;
-		const date = typeof data.date === 'string' ? data.date : latestDate(artifact.path);
+		const { data, rawBody } =
+			contentType === 'yaml'
+				? { data: {}, rawBody: content.trim() }
+				: splitFrontmatter(content);
+		const fallbackTitle =
+			contentType === 'yaml'
+				? 'OpenSpec Config'
+				: artifact.classification.kind === 'spec'
+					? titleFromSlug(basename(artifact.path))
+					: titleFromSlug(artifact.classification.kind);
+		const title =
+			contentType === 'yaml'
+				? fallbackTitle
+				: typeof data.title === 'string'
+					? data.title
+					: extractTitle(rawBody, fallbackTitle);
+		const description =
+			typeof data.description === 'string' ? data.description : undefined;
+		const date =
+			typeof data.date === 'string' ? data.date : latestDate(artifact.path);
 		let id = artifact.classification.id;
 
 		const duplicateCount = seen.get(`${artifact.project}:${id}`) ?? 0;
 		if (duplicateCount > 0) id = `${id}-${duplicateCount + 1}`;
-		seen.set(`${artifact.project}:${artifact.classification.id}`, duplicateCount + 1);
+		seen.set(
+			`${artifact.project}:${artifact.classification.id}`,
+			duplicateCount + 1,
+		);
 
 		const doc: MeridianDoc = {
 			id,
@@ -217,7 +266,9 @@ export function loadCorpus(force = false): Corpus {
 			tags: artifact.classification.tags,
 			related: [],
 			contains: [],
-			part_of: artifact.classification.groupId ? [artifact.classification.groupId] : [],
+			part_of: artifact.classification.groupId
+				? [artifact.classification.groupId]
+				: [],
 			external: [],
 			project: artifact.project,
 			description,
@@ -225,29 +276,54 @@ export function loadCorpus(force = false): Corpus {
 			rawBody,
 			filePath: artifact.path,
 			contentType,
-			source: 'openspec'
+			source: 'openspec',
 		};
 
 		firstPassDocs.push(doc);
-		byIdMap.set(id, { status: doc.status, title: doc.title, project: doc.project });
-		byIdMap.set(`${artifact.project}:${id}`, { status: doc.status, title: doc.title, project: doc.project });
+		byIdMap.set(id, {
+			status: doc.status,
+			title: doc.title,
+			project: doc.project,
+		});
+		byIdMap.set(`${artifact.project}:${id}`, {
+			status: doc.status,
+			title: doc.title,
+			project: doc.project,
+		});
 	}
 
 	const docs = addChangeGroupNodes(firstPassDocs).map((doc) => ({
 		...doc,
-		body: doc.contentType === 'yaml'
-			? `<pre data-block-id="pre-0"><code class="language-yaml">${escapeHtml(doc.rawBody)}</code></pre>`
-			: doc.rawBody ? renderMarkdown(doc.rawBody, byIdMap, doc.project) : ''
+		body:
+			doc.contentType === 'yaml'
+				? `<pre data-block-id="pre-0"><code class="language-yaml">${escapeHtml(doc.rawBody)}</code></pre>`
+				: doc.rawBody
+					? renderMarkdown(doc.rawBody, byIdMap, doc.project)
+					: '',
 	}));
 
-	const STATUS_ORDER: Record<DocStatus, number> = { active: 0, canonical: 1, archived: 2, legacy: 3 };
-	const KIND_ORDER: Record<DocKind, number> = { proposal: 0, design: 1, tasks: 2, adr: 3, spec: 4, tdd: 5, note: 6 };
-	docs.sort((a, b) =>
-		(a.project ?? '').localeCompare(b.project ?? '') ||
-		STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
-		(a.tags[2] ?? '').localeCompare(b.tags[2] ?? '') ||
-		KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
-		a.id.localeCompare(b.id)
+	const STATUS_ORDER: Record<DocStatus, number> = {
+		active: 0,
+		canonical: 1,
+		archived: 2,
+		legacy: 3,
+	};
+	const KIND_ORDER: Record<DocKind, number> = {
+		proposal: 0,
+		design: 1,
+		tasks: 2,
+		adr: 3,
+		spec: 4,
+		tdd: 5,
+		note: 6,
+	};
+	docs.sort(
+		(a, b) =>
+			(a.project ?? '').localeCompare(b.project ?? '') ||
+			STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
+			(a.tags[2] ?? '').localeCompare(b.tags[2] ?? '') ||
+			KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
+			a.id.localeCompare(b.id),
 	);
 
 	const byId: Record<string, MeridianDoc> = {};
@@ -286,7 +362,11 @@ function addChangeGroupNodes(docs: MeridianDoc[]): MeridianDoc[] {
 			kind: 'note',
 			title: titleFromSlug(changeSlug),
 			status: archived ? 'archived' : 'active',
-			date: children.map((child) => child.date ?? '').sort().at(-1) ?? '',
+			date:
+				children
+					.map((child) => child.date ?? '')
+					.sort()
+					.at(-1) ?? '',
 			authors: [],
 			tags: ['openspec', archived ? 'archived-change' : 'change', changeSlug],
 			related: [],
@@ -294,37 +374,59 @@ function addChangeGroupNodes(docs: MeridianDoc[]): MeridianDoc[] {
 			part_of: [],
 			external: [],
 			project,
-			description: archived ? 'Archived OpenSpec change' : 'Active OpenSpec change',
+			description: archived
+				? 'Archived OpenSpec change'
+				: 'Active OpenSpec change',
 			body: '',
 			rawBody: `# ${titleFromSlug(changeSlug)}\n\n${archived ? 'Archived' : 'Active'} OpenSpec change containing ${children.length} artifact${children.length === 1 ? '' : 's'}.`,
 			filePath: dirname(children[0].filePath),
 			contentType: 'markdown',
-			source: 'openspec'
+			source: 'openspec',
 		});
 	}
 
 	return [...docs, ...groupNodes];
 }
 
-export function findDoc(docs: MeridianDoc[], project: string, id: string): MeridianDoc | undefined {
-	return docs.find((doc) => doc.project === project && doc.id === id) ?? docs.find((doc) => doc.id === id);
+export function findDoc(
+	docs: MeridianDoc[],
+	project: string,
+	id: string,
+): MeridianDoc | undefined {
+	return (
+		docs.find((doc) => doc.project === project && doc.id === id) ??
+		docs.find((doc) => doc.id === id)
+	);
 }
 
-export async function writeOpenSpecDoc(project: string, id: string, rawBody: string): Promise<void> {
+export async function writeOpenSpecDoc(
+	project: string,
+	id: string,
+	rawBody: string,
+): Promise<void> {
 	const corpus = loadCorpus();
 	const doc = findDoc(corpus.docs, project, id);
 	if (!doc) throw new Error(`Document not found: ${project}/${id}`);
-	if (doc.source !== 'openspec' || (doc.kind === 'note' && doc.id !== 'openspec-config')) {
-		throw new Error(`Document is not an editable OpenSpec artifact: ${project}/${id}`);
+	if (
+		doc.source !== 'openspec' ||
+		(doc.kind === 'note' && doc.id !== 'openspec-config')
+	) {
+		throw new Error(
+			`Document is not an editable OpenSpec artifact: ${project}/${id}`,
+		);
 	}
 
 	const original = readFileSync(doc.filePath, 'utf-8');
-	const parsed = doc.contentType === 'yaml' ? { data: {}, content: original } : matter(original);
-	const content = doc.contentType === 'yaml'
-		? rawBody.trim() + '\n'
-		: Object.keys(parsed.data).length > 0
-		? matter.stringify(rawBody.trim() + '\n', parsed.data)
-		: rawBody.trim() + '\n';
+	const parsed =
+		doc.contentType === 'yaml'
+			? { data: {}, content: original }
+			: matter(original);
+	const content =
+		doc.contentType === 'yaml'
+			? rawBody.trim() + '\n'
+			: Object.keys(parsed.data).length > 0
+				? matter.stringify(rawBody.trim() + '\n', parsed.data)
+				: rawBody.trim() + '\n';
 
 	await writeFile(doc.filePath, content, 'utf-8');
 	_cache = null;
@@ -377,18 +479,25 @@ export function getProjectSummaries(docs: MeridianDocSlim[]): ProjectSummary[] {
 				artifactCount: 0,
 				archivedCount: 0,
 				activeCount: 0,
-				lastUpdated: ''
+				lastUpdated: '',
 			});
 		}
 		const summary = map.get(doc.project)!;
-		if (doc.kind === 'note' && doc.tags.includes('change')) summary.changeCount++;
+		if (doc.kind === 'note' && doc.tags.includes('change'))
+			summary.changeCount++;
 		if (doc.kind === 'adr' && doc.status === 'canonical') summary.adrCount++;
 		if (doc.kind === 'spec' && doc.status === 'canonical') summary.specCount++;
 		if (doc.kind === 'tdd' && doc.status === 'canonical') summary.tddCount++;
-		if (doc.kind !== 'note' || doc.id === 'openspec-config') summary.artifactCount++;
+		if (doc.kind !== 'note' || doc.id === 'openspec-config')
+			summary.artifactCount++;
 		if (doc.status === 'archived') summary.archivedCount++;
 		if (doc.status === 'active') summary.activeCount++;
-		if (!summary.lastUpdated || doc.date > summary.lastUpdated) summary.lastUpdated = doc.date;
+		if (!summary.lastUpdated || doc.date > summary.lastUpdated)
+			summary.lastUpdated = doc.date;
 	}
-	return [...map.values()].sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated) || a.name.localeCompare(b.name));
+	return [...map.values()].sort(
+		(a, b) =>
+			b.lastUpdated.localeCompare(a.lastUpdated) ||
+			a.name.localeCompare(b.name),
+	);
 }

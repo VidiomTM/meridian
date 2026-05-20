@@ -1,129 +1,149 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { MeridianDoc } from '$lib/meridian/format.js';
-	import { buildGraph } from '$lib/meridian/relations.js';
-	import type { GraphNode, GraphEdge } from '$lib/meridian/relations.js';
-	import { REL_COLORS } from '$lib/meridian/format.js';
-	import StatusChip from './StatusChip.svelte';
-	import { trapFocus } from '$lib/a11y/trap-focus.js';
-	import { runForceSim } from '$lib/meridian/force-sim.js';
-	import type { Positions, ForceEdge } from '$lib/meridian/force-sim.js';
-	import ForceWorker from '$lib/meridian/force-sim.worker.ts?worker';
+import { onMount } from 'svelte';
+import { trapFocus } from '$lib/a11y/trap-focus.js';
+import type { ForceEdge, Positions } from '$lib/meridian/force-sim.js';
+import { runForceSim } from '$lib/meridian/force-sim.js';
+import ForceWorker from '$lib/meridian/force-sim.worker.ts?worker';
+import type { MeridianDoc } from '$lib/meridian/format.js';
+import { REL_COLORS } from '$lib/meridian/format.js';
+import type { GraphEdge, GraphNode } from '$lib/meridian/relations.js';
+import { buildGraph } from '$lib/meridian/relations.js';
+import StatusChip from './StatusChip.svelte';
 
-	let {
-		docs,
-		focusId = null,
-		onclose,
-		onnavigate
-	}: {
-		docs: MeridianDoc[];
-		focusId?: string | null;
-		onclose: () => void;
-		onnavigate: (id: string) => void;
-	} = $props();
+let {
+	docs,
+	focusId = null,
+	onclose,
+	onnavigate,
+}: {
+	docs: MeridianDoc[];
+	focusId?: string | null;
+	onclose: () => void;
+	onnavigate: (id: string) => void;
+} = $props();
 
-	const W = 740;
-	const H = 480;
+const W = 740;
+const H = 480;
 
-	let edges = $state<GraphEdge[]>([]);
-	let layout = $state<'force' | 'radial'>('force');
-	let hoverId = $state<string | null>(null);
-	let hoverPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
-	let positions = $state<Positions>({});
-	let computing = $state(false);
-	let activeWorker: Worker | null = null;
+let edges = $state<GraphEdge[]>([]);
+let layout = $state<'force' | 'radial'>('force');
+let hoverId = $state<string | null>(null);
+let hoverPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
+let positions = $state<Positions>({});
+let computing = $state(false);
+let activeWorker: Worker | null = null;
 
-	const statusFill: Record<string, string> = {
-		active: '#f0e0bd',
-		canonical: '#d8e3d3',
-		archived: '#d8d1c4',
-		legacy: '#e3ddcf'
+const statusFill: Record<string, string> = {
+	active: '#f0e0bd',
+	canonical: '#d8e3d3',
+	archived: '#d8d1c4',
+	legacy: '#e3ddcf',
+};
+const statusStroke: Record<string, string> = {
+	active: '#b88820',
+	canonical: '#4a7b3f',
+	archived: '#8a8270',
+	legacy: '#8a8270',
+};
+
+// Build nodes list from positions for rendering
+const nodes = $derived(
+	docs.map((doc) => ({
+		id: doc.id,
+		kind: doc.kind,
+		status: doc.status,
+		title: doc.title,
+		x: positions[doc.id]?.x ?? W / 2,
+		y: positions[doc.id]?.y ?? H / 2,
+	})),
+);
+
+function computePositions(currentLayout: string) {
+	const { nodes: ns, edges: es } = buildGraph(docs);
+	edges = es;
+	const forceEdges: ForceEdge[] = es.map((e) => ({
+		from: e.source,
+		to: e.target,
+		kind: e.kind,
+	}));
+	const ids = docs.map((d) => d.id);
+
+	if (ids.length < 60) {
+		positions = runForceSim({
+			ids,
+			edges: forceEdges,
+			width: W,
+			height: H,
+			layout: currentLayout as 'force' | 'radial',
+			focusId: focusId ?? undefined,
+			iterations: 300,
+		});
+		return;
+	}
+	computing = true;
+	if (activeWorker) activeWorker.terminate();
+	activeWorker = new ForceWorker();
+	activeWorker.onmessage = (e: MessageEvent) => {
+		positions = e.data;
+		computing = false;
 	};
-	const statusStroke: Record<string, string> = {
-		active: '#b88820',
-		canonical: '#4a7b3f',
-		archived: '#8a8270',
-		legacy: '#8a8270'
-	};
-
-	// Build nodes list from positions for rendering
-	const nodes = $derived(
-		docs.map((doc) => ({
-			id: doc.id,
-			kind: doc.kind,
-			status: doc.status,
-			title: doc.title,
-			x: positions[doc.id]?.x ?? W / 2,
-			y: positions[doc.id]?.y ?? H / 2,
-		}))
-	);
-
-	function computePositions(currentLayout: string) {
-		const { nodes: ns, edges: es } = buildGraph(docs);
-		edges = es;
-		const forceEdges: ForceEdge[] = es.map(e => ({ from: e.source, to: e.target, kind: e.kind }));
-		const ids = docs.map(d => d.id);
-
-		if (ids.length < 60) {
-			positions = runForceSim({ ids, edges: forceEdges, width: W, height: H, layout: currentLayout as 'force' | 'radial', focusId: focusId ?? undefined, iterations: 300 });
-			return;
-		}
-		computing = true;
-		if (activeWorker) activeWorker.terminate();
-		activeWorker = new ForceWorker();
-		activeWorker.onmessage = (e: MessageEvent) => {
-			positions = e.data;
-			computing = false;
-		};
-		activeWorker.postMessage({ ids, edges: forceEdges, width: W, height: H, layout: currentLayout, focusId: focusId ?? undefined, iterations: 300 });
-	}
-
-	onMount(() => {
-		computePositions(layout);
+	activeWorker.postMessage({
+		ids,
+		edges: forceEdges,
+		width: W,
+		height: H,
+		layout: currentLayout,
+		focusId: focusId ?? undefined,
+		iterations: 300,
 	});
+}
 
-	$effect(() => {
-		computePositions(layout);
-		return () => activeWorker?.terminate();
-	});
+onMount(() => {
+	computePositions(layout);
+});
 
-	const nodeMap = $derived(new Map(nodes.map((n) => [n.id, n])));
+$effect(() => {
+	computePositions(layout);
+	return () => activeWorker?.terminate();
+});
 
-	function getNeighbours(id: string): Set<string> {
-		const s = new Set<string>();
-		for (const e of edges) {
-			if (e.source === id) s.add(e.target);
-			if (e.target === id) s.add(e.source);
-		}
-		return s;
+const nodeMap = $derived(new Map(nodes.map((n) => [n.id, n])));
+
+function getNeighbours(id: string): Set<string> {
+	const s = new Set<string>();
+	for (const e of edges) {
+		if (e.source === id) s.add(e.target);
+		if (e.target === id) s.add(e.source);
 	}
+	return s;
+}
 
-	function nodeOpacity(id: string): number {
-		if (!hoverId) return 1;
-		if (id === hoverId) return 1;
-		if (getNeighbours(hoverId).has(id)) return 0.9;
-		return 0.15;
-	}
+function nodeOpacity(id: string): number {
+	if (!hoverId) return 1;
+	if (id === hoverId) return 1;
+	if (getNeighbours(hoverId).has(id)) return 0.9;
+	return 0.15;
+}
 
-	function edgeOpacity(e: GraphEdge): number {
-		if (!hoverId) return 0.55;
-		if (e.source === hoverId || e.target === hoverId) return 1;
-		return 0.05;
-	}
+function edgeOpacity(e: GraphEdge): number {
+	if (!hoverId) return 0.55;
+	if (e.source === hoverId || e.target === hoverId) return 1;
+	return 0.05;
+}
 
-	function handleNodeHover(id: string, e: MouseEvent) {
-		hoverId = id;
-		hoverPos = { x: e.offsetX + 12, y: e.offsetY + 12 };
-	}
+function handleNodeHover(id: string, e: MouseEvent) {
+	hoverId = id;
+	hoverPos = { x: e.offsetX + 12, y: e.offsetY + 12 };
+}
 
-	function handleMouseLeave() {
-		hoverId = null;
-	}
+function handleMouseLeave() {
+	hoverId = null;
+}
 
-	const hoverDoc = $derived(hoverId ? docs.find((d) => d.id === hoverId) : null);
+const hoverDoc = $derived(hoverId ? docs.find((d) => d.id === hoverId) : null);
 
-	// Arrow marker definitions per relation kind
-	const edgeKinds = ['contains', 'part_of', 'related'] as const;
+// Arrow marker definitions per relation kind
+const edgeKinds = ['contains', 'part_of', 'related'] as const;
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

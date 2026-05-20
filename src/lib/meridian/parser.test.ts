@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { renderMarkdown, splitFrontmatter, extractTitle, extractSubtitle } from './parser.js';
+import { describe, expect, it } from 'vitest';
+import {
+	extractSubtitle,
+	extractTitle,
+	renderMarkdown,
+	splitFrontmatter,
+} from './parser.js';
 
 describe('renderMarkdown', () => {
 	it('renders a heading', () => {
@@ -98,7 +103,9 @@ describe('renderMarkdown', () => {
 	});
 
 	it('renders safe URLs correctly', () => {
-		const result = renderMarkdown('[home](/path) [ext](https://ext.com) [mail](mailto:a@b.com) [hash](#anchor)');
+		const result = renderMarkdown(
+			'[home](/path) [ext](https://ext.com) [mail](mailto:a@b.com) [hash](#anchor)',
+		);
 		expect(result).toContain('href="/path"');
 		expect(result).toContain('href="https://ext.com"');
 		expect(result).toContain('href="mailto:a@b.com"');
@@ -127,7 +134,9 @@ describe('renderMarkdown', () => {
 
 describe('splitFrontmatter', () => {
 	it('extracts frontmatter data', () => {
-		const result = splitFrontmatter('---\ntitle: Test\nstatus: active\n---\n\nBody content.');
+		const result = splitFrontmatter(
+			'---\ntitle: Test\nstatus: active\n---\n\nBody content.',
+		);
 		expect(result.data).toEqual({ title: 'Test', status: 'active' });
 		expect(result.rawBody).toBe('Body content.');
 	});
@@ -158,7 +167,9 @@ describe('extractSubtitle', () => {
 	});
 
 	it('falls back to first section content when no description', () => {
-		const sub = extractSubtitle('# Doc\n\n## Summary\n\nKey info here.\n\n## Other');
+		const sub = extractSubtitle(
+			'# Doc\n\n## Summary\n\nKey info here.\n\n## Other',
+		);
 		expect(sub).toBe('Key info here.');
 	});
 

@@ -1,78 +1,106 @@
 <script lang="ts">
-	import type { DocKind, DocStatus } from '$lib/meridian/format.js';
-	import { KIND_LABELS, STATUS_LABELS } from '$lib/meridian/format.js';
-	import type { MeridianDocSlim } from '$lib/meridian/corpus.js';
-	import { explorerFilter } from '$lib/stores/explorer-filter.svelte.js';
-	import { page } from '$app/state';
+import { page } from '$app/state';
+import type { MeridianDocSlim } from '$lib/meridian/corpus.js';
+import type { DocKind, DocStatus } from '$lib/meridian/format.js';
+import { KIND_LABELS, STATUS_LABELS } from '$lib/meridian/format.js';
+import { explorerFilter } from '$lib/stores/explorer-filter.svelte.js';
 
-	let {
-		docs,
-		activeId = null,
-		onselect
-	}: {
-		docs: MeridianDocSlim[];
-		activeId?: string | null;
-		onselect: (id: string) => void;
-	} = $props();
+let {
+	docs,
+	activeId = null,
+	onselect,
+}: {
+	docs: MeridianDocSlim[];
+	activeId?: string | null;
+	onselect: (id: string) => void;
+} = $props();
 
-	let search = $state('');
-	let kindTab = $state<'all' | DocKind>('all');
-	let activeStatuses = $state<Set<DocStatus>>(new Set());
-	let rowEls: Record<string, HTMLElement> = {};
+let search = $state('');
+let kindTab = $state<'all' | DocKind>('all');
+let activeStatuses = $state<Set<DocStatus>>(new Set());
+let rowEls: Record<string, HTMLElement> = {};
 
-	const ALL_STATUSES: DocStatus[] = ['active', 'canonical', 'archived', 'legacy'];
-	const ALL_KINDS: DocKind[] = ['proposal', 'design', 'tasks', 'adr', 'spec', 'tdd', 'note'];
+const ALL_STATUSES: DocStatus[] = ['active', 'canonical', 'archived', 'legacy'];
+const ALL_KINDS: DocKind[] = [
+	'proposal',
+	'design',
+	'tasks',
+	'adr',
+	'spec',
+	'tdd',
+	'note',
+];
 
-	const statusDotColors: Record<DocStatus, string> = {
-		active: 'var(--st-proposed-dot)',
-		canonical: 'var(--st-accepted-dot)',
-		archived: 'var(--st-superseded-dot)',
-		legacy: 'var(--st-draft-dot)'
-	};
+const statusDotColors: Record<DocStatus, string> = {
+	active: 'var(--st-proposed-dot)',
+	canonical: 'var(--st-accepted-dot)',
+	archived: 'var(--st-superseded-dot)',
+	legacy: 'var(--st-draft-dot)',
+};
 
-	function toggleStatus(status: DocStatus) {
-		const next = new Set(activeStatuses);
-		if (next.has(status)) next.delete(status);
-		else next.add(status);
-		activeStatuses = next;
-	}
+function toggleStatus(status: DocStatus) {
+	const next = new Set(activeStatuses);
+	if (next.has(status)) next.delete(status);
+	else next.add(status);
+	activeStatuses = next;
+}
 
-	const activeProject = $derived(page.params?.project ?? null);
-	const projectDocs = $derived(activeProject ? docs.filter((doc) => doc.project === activeProject) : docs);
+const activeProject = $derived(page.params?.project ?? null);
+const projectDocs = $derived(
+	activeProject ? docs.filter((doc) => doc.project === activeProject) : docs,
+);
 
-	const filtered = $derived(projectDocs.filter((doc) => {
+const filtered = $derived(
+	projectDocs.filter((doc) => {
 		const q = search.toLowerCase();
 		if (kindTab !== 'all' && doc.kind !== kindTab) return false;
-		if (activeStatuses.size > 0 && !activeStatuses.has(doc.status)) return false;
-		if (q && !doc.id.toLowerCase().includes(q) && !doc.title.toLowerCase().includes(q) && !doc.tags.some((tag) => tag.toLowerCase().includes(q))) return false;
+		if (activeStatuses.size > 0 && !activeStatuses.has(doc.status))
+			return false;
+		if (
+			q &&
+			!doc.id.toLowerCase().includes(q) &&
+			!doc.title.toLowerCase().includes(q) &&
+			!doc.tags.some((tag) => tag.toLowerCase().includes(q))
+		)
+			return false;
 		return true;
-	}));
+	}),
+);
 
-	$effect(() => {
-		explorerFilter.filteredIds = filtered.map((doc) => doc.id);
-	});
+$effect(() => {
+	explorerFilter.filteredIds = filtered.map((doc) => doc.id);
+});
 
-	const active = $derived(filtered.filter((doc) => doc.status === 'active'));
-	const canonical = $derived(filtered.filter((doc) => doc.status === 'canonical'));
-	const archived = $derived(filtered.filter((doc) => doc.status === 'archived'));
-	const legacy = $derived(filtered.filter((doc) => doc.status === 'legacy'));
-	const groups = $derived([
+const active = $derived(filtered.filter((doc) => doc.status === 'active'));
+const canonical = $derived(
+	filtered.filter((doc) => doc.status === 'canonical'),
+);
+const archived = $derived(filtered.filter((doc) => doc.status === 'archived'));
+const legacy = $derived(filtered.filter((doc) => doc.status === 'legacy'));
+const groups = $derived(
+	[
 		{ label: 'Active Changes', docs: active },
 		{ label: 'Canonical Specs', docs: canonical },
 		{ label: 'Archive', docs: archived },
-		{ label: 'Legacy', docs: legacy }
-	].filter((group) => group.docs.length > 0));
+		{ label: 'Legacy', docs: legacy },
+	].filter((group) => group.docs.length > 0),
+);
 
-	function countKind(kind: DocKind): number {
-		return projectDocs.filter((doc) => doc.kind === kind).length;
-	}
+function countKind(kind: DocKind): number {
+	return projectDocs.filter((doc) => doc.kind === kind).length;
+}
 
-	$effect(() => {
-		const el = activeId ? rowEls[activeId] : null;
-		if (!el) return;
-		const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		el.scrollIntoView({ block: 'nearest', behavior: reducedMotion ? 'instant' : 'smooth' });
+$effect(() => {
+	const el = activeId ? rowEls[activeId] : null;
+	if (!el) return;
+	const reducedMotion =
+		typeof window !== 'undefined' &&
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	el.scrollIntoView({
+		block: 'nearest',
+		behavior: reducedMotion ? 'instant' : 'smooth',
 	});
+});
 </script>
 
 <aside class="explorer">

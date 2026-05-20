@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { trapFocus } from '$lib/a11y/trap-focus.js';
-	let { onClose } = $props<{ onClose: () => void }>();
+import { trapFocus } from '$lib/a11y/trap-focus.js';
+
+let { onClose } = $props<{ onClose: () => void }>();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

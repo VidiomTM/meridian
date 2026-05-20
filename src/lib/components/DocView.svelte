@@ -1,53 +1,64 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import type { MeridianDoc } from '$lib/meridian/format.js';
-	import { extractSubtitle } from '$lib/meridian/parser.js';
-	import StatusChip from './StatusChip.svelte';
+import { invalidate } from '$app/navigation';
+import type { MeridianDoc } from '$lib/meridian/format.js';
+import { extractSubtitle } from '$lib/meridian/parser.js';
+import StatusChip from './StatusChip.svelte';
 
-	let {
-		doc,
-		onOpenGraph,
-		onOpenHistory
-	}: {
-		doc: MeridianDoc;
-		onOpenGraph: () => void;
-		onOpenHistory: () => void;
-	} = $props();
+let {
+	doc,
+	onOpenGraph,
+	onOpenHistory,
+}: {
+	doc: MeridianDoc;
+	onOpenGraph: () => void;
+	onOpenHistory: () => void;
+} = $props();
 
-	const subtitle = $derived(extractSubtitle(doc.rawBody, { description: doc.description }));
-	const relativePath = $derived(doc.filePath.split('/projects/').at(-1) ?? doc.filePath);
-	let editing = $state(false);
-	let editedBody = $state('');
-	let saving = $state(false);
-	const editable = $derived(doc.source === 'openspec' && (doc.kind !== 'note' || doc.id === 'openspec-config') && Boolean(doc.project));
-	const dirty = $derived(editedBody !== doc.rawBody);
+const subtitle = $derived(
+	extractSubtitle(doc.rawBody, { description: doc.description }),
+);
+const relativePath = $derived(
+	doc.filePath.split('/projects/').at(-1) ?? doc.filePath,
+);
+let editing = $state(false);
+let editedBody = $state('');
+let saving = $state(false);
+const editable = $derived(
+	doc.source === 'openspec' &&
+		(doc.kind !== 'note' || doc.id === 'openspec-config') &&
+		Boolean(doc.project),
+);
+const dirty = $derived(editedBody !== doc.rawBody);
 
-	$effect(() => {
-		doc.id;
-		editedBody = doc.rawBody;
-		editing = false;
-	});
+$effect(() => {
+	doc.id;
+	editedBody = doc.rawBody;
+	editing = false;
+});
 
-	async function save() {
-		if (!editable || !doc.project || saving) return;
-		saving = true;
-		try {
-			await fetch(`/api/docs/${encodeURIComponent(doc.project)}/${encodeURIComponent(doc.id)}`, {
+async function save() {
+	if (!editable || !doc.project || saving) return;
+	saving = true;
+	try {
+		await fetch(
+			`/api/docs/${encodeURIComponent(doc.project)}/${encodeURIComponent(doc.id)}`,
+			{
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ body: editedBody })
-			});
-			await invalidate('app:doc');
-			editing = false;
-		} finally {
-			saving = false;
-		}
-	}
-
-	function discard() {
-		editedBody = doc.rawBody;
+				body: JSON.stringify({ body: editedBody }),
+			},
+		);
+		await invalidate('app:doc');
 		editing = false;
+	} finally {
+		saving = false;
 	}
+}
+
+function discard() {
+	editedBody = doc.rawBody;
+	editing = false;
+}
 </script>
 
 <article id="doc-main" tabindex="-1" class="doc-pane">

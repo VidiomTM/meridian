@@ -1,52 +1,61 @@
 <script lang="ts">
-	import type { MeridianDoc, InvEntry } from '$lib/meridian/format.js';
-	import { REL_COLORS, REL_LABELS } from '$lib/meridian/format.js';
+import type { InvEntry, MeridianDoc } from '$lib/meridian/format.js';
+import { REL_COLORS, REL_LABELS } from '$lib/meridian/format.js';
 
-	let {
-		doc,
-		byId,
-		inv,
-		onOpenGraph,
-		onNavigate
-	}: {
-		doc: MeridianDoc;
-		byId: Record<string, MeridianDoc>;
-		inv: Record<string, InvEntry>;
-		onOpenGraph: () => void;
-		onNavigate: (id: string) => void;
-	} = $props();
+let {
+	doc,
+	byId,
+	inv,
+	onOpenGraph,
+	onNavigate,
+}: {
+	doc: MeridianDoc;
+	byId: Record<string, MeridianDoc>;
+	inv: Record<string, InvEntry>;
+	onOpenGraph: () => void;
+	onNavigate: (id: string) => void;
+} = $props();
 
-	const invEntry = $derived(inv[doc.id] ?? {
+const invEntry = $derived(
+	inv[doc.id] ?? {
 		contained_by: [],
 		contains_inv: [],
-		related_from: []
-	});
+		related_from: [],
+	},
+);
 
-	type RelKind = 'contains' | 'part_of' | 'related' | 'contained_by' | 'contains_inv' | 'related_from';
+type RelKind =
+	| 'contains'
+	| 'part_of'
+	| 'related'
+	| 'contained_by'
+	| 'contains_inv'
+	| 'related_from';
 
-	interface RelGroup {
-		kind: RelKind;
-		ids: string[];
-	}
+interface RelGroup {
+	kind: RelKind;
+	ids: string[];
+}
 
-	const relGroups = $derived<RelGroup[]>([
-		{ kind: 'contains' as RelKind,      ids: doc.contains },
-		{ kind: 'part_of' as RelKind,       ids: doc.part_of },
-		{ kind: 'related' as RelKind,       ids: doc.related },
-		{ kind: 'contained_by' as RelKind,  ids: invEntry.contained_by },
-		{ kind: 'contains_inv' as RelKind,  ids: invEntry.contains_inv },
-		{ kind: 'related_from' as RelKind,  ids: invEntry.related_from }
-	].filter((g) => g.ids.length > 0));
+const relGroups = $derived<RelGroup[]>(
+	[
+		{ kind: 'contains' as RelKind, ids: doc.contains },
+		{ kind: 'part_of' as RelKind, ids: doc.part_of },
+		{ kind: 'related' as RelKind, ids: doc.related },
+		{ kind: 'contained_by' as RelKind, ids: invEntry.contained_by },
+		{ kind: 'contains_inv' as RelKind, ids: invEntry.contains_inv },
+		{ kind: 'related_from' as RelKind, ids: invEntry.related_from },
+	].filter((g) => g.ids.length > 0),
+);
 
-	const totalLinks = $derived(relGroups.reduce((s, g) => s + g.ids.length, 0));
+const totalLinks = $derived(relGroups.reduce((s, g) => s + g.ids.length, 0));
 
-	const extIconLabels: Record<string, string> = {
-		jira: 'J',
-		github: 'G',
-		confluence: 'C',
-		slack: 'S'
-	};
-
+const extIconLabels: Record<string, string> = {
+	jira: 'J',
+	github: 'G',
+	confluence: 'C',
+	slack: 'S',
+};
 </script>
 
 <aside class="relations-rail">

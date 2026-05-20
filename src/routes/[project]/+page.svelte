@@ -1,25 +1,38 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { KIND_LABELS } from '$lib/meridian/format.js';
-	import type { MeridianDocSlim } from '$lib/meridian/corpus.js';
+import { page } from '$app/state';
+import type { MeridianDocSlim } from '$lib/meridian/corpus.js';
+import { KIND_LABELS } from '$lib/meridian/format.js';
 
-	type ProjectPageData = { projectDocs: MeridianDocSlim[] };
-	const PROJECT_KINDS: MeridianDocSlim['kind'][] = ['adr', 'spec', 'tdd', 'proposal', 'design', 'tasks', 'note'];
+type ProjectPageData = { projectDocs: MeridianDocSlim[] };
+const PROJECT_KINDS: MeridianDocSlim['kind'][] = [
+	'adr',
+	'spec',
+	'tdd',
+	'proposal',
+	'design',
+	'tasks',
+	'note',
+];
 
-	let { data }: { data: ProjectPageData } = $props();
+let { data }: { data: ProjectPageData } = $props();
 
-	const artifactDocs = $derived(data.projectDocs.filter((doc: MeridianDocSlim) => doc.id !== 'openspec-config'));
-	const featuredDoc = $derived(
-		artifactDocs.find((doc: MeridianDocSlim) => doc.kind === 'adr') ??
+const artifactDocs = $derived(
+	data.projectDocs.filter(
+		(doc: MeridianDocSlim) => doc.id !== 'openspec-config',
+	),
+);
+const featuredDoc = $derived(
+	artifactDocs.find((doc: MeridianDocSlim) => doc.kind === 'adr') ??
 		artifactDocs.find((doc: MeridianDocSlim) => doc.kind === 'spec') ??
 		artifactDocs.find((doc: MeridianDocSlim) => doc.kind === 'tdd') ??
 		artifactDocs[0] ??
-		data.projectDocs[0]
-	);
+		data.projectDocs[0],
+);
 
-	function countKind(kind: MeridianDocSlim['kind']) {
-		return data.projectDocs.filter((doc: MeridianDocSlim) => doc.kind === kind).length;
-	}
+function countKind(kind: MeridianDocSlim['kind']) {
+	return data.projectDocs.filter((doc: MeridianDocSlim) => doc.kind === kind)
+		.length;
+}
 </script>
 
 <main class="doc-pane" id="doc-main" tabindex="-1">

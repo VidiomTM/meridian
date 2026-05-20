@@ -1,6 +1,6 @@
-import type { PageServerLoad } from './$types.js';
 import { error } from '@sveltejs/kit';
-import { loadCorpus, findDoc } from '$lib/meridian/corpus.js';
+import { findDoc, loadCorpus } from '$lib/meridian/corpus.js';
+import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params, depends }) => {
 	depends('app:doc');

@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { buildInvIndex, buildGraph, runForceSimulation } from './relations.js';
-import type { MeridianDoc, DocKind, DocStatus } from './format.js';
-import type { GraphNode, GraphEdge } from './relations.js';
+import { describe, expect, it } from 'vitest';
+import type { DocKind, DocStatus, MeridianDoc } from './format.js';
+import type { GraphEdge, GraphNode } from './relations.js';
+import { buildGraph, buildInvIndex, runForceSimulation } from './relations.js';
 
-function makeDoc(overrides: Partial<MeridianDoc> & { id: string }): MeridianDoc {
+function makeDoc(
+	overrides: Partial<MeridianDoc> & { id: string },
+): MeridianDoc {
 	return {
 		kind: 'note' as DocKind,
 		title: 'Test',
@@ -20,7 +22,7 @@ function makeDoc(overrides: Partial<MeridianDoc> & { id: string }): MeridianDoc 
 		filePath: '',
 		contentType: 'markdown',
 		source: 'openspec',
-		...overrides
+		...overrides,
 	};
 }
 
@@ -33,7 +35,7 @@ describe('buildInvIndex', () => {
 	it('builds contained_by from contains', () => {
 		const docs = [
 			makeDoc({ id: 'parent' }),
-			makeDoc({ id: 'child', contains: ['parent'] })
+			makeDoc({ id: 'child', contains: ['parent'] }),
 		];
 		const inv = buildInvIndex(docs);
 		expect(inv.get('parent')?.contained_by).toEqual(['child']);
@@ -42,17 +44,14 @@ describe('buildInvIndex', () => {
 	it('builds contains_inv from part_of', () => {
 		const docs = [
 			makeDoc({ id: 'child', part_of: ['parent'] }),
-			makeDoc({ id: 'parent' })
+			makeDoc({ id: 'parent' }),
 		];
 		const inv = buildInvIndex(docs);
 		expect(inv.get('parent')?.contains_inv).toEqual(['child']);
 	});
 
 	it('builds related_from from related', () => {
-		const docs = [
-			makeDoc({ id: 'a', related: ['b'] }),
-			makeDoc({ id: 'b' })
-		];
+		const docs = [makeDoc({ id: 'a', related: ['b'] }), makeDoc({ id: 'b' })];
 		const inv = buildInvIndex(docs);
 		expect(inv.get('b')?.related_from).toEqual(['a']);
 	});
@@ -60,7 +59,7 @@ describe('buildInvIndex', () => {
 	it('handles multiple docs referencing same target', () => {
 		const docs = [
 			makeDoc({ id: 'a', contains: ['target'] }),
-			makeDoc({ id: 'b', contains: ['target'] })
+			makeDoc({ id: 'b', contains: ['target'] }),
 		];
 		const inv = buildInvIndex(docs);
 		expect(inv.get('target')?.contained_by).toEqual(['a', 'b']);
@@ -75,10 +74,7 @@ describe('buildGraph', () => {
 	});
 
 	it('creates a node per doc with initial positions', () => {
-		const docs = [
-			makeDoc({ id: 'a' }),
-			makeDoc({ id: 'b' })
-		];
+		const docs = [makeDoc({ id: 'a' }), makeDoc({ id: 'b' })];
 		const { nodes } = buildGraph(docs);
 		expect(nodes).toHaveLength(2);
 		expect(nodes[0].id).toBe('a');
@@ -90,7 +86,7 @@ describe('buildGraph', () => {
 		const docs = [
 			makeDoc({ id: 'a', contains: ['b'] }),
 			makeDoc({ id: 'b', part_of: ['c'] }),
-			makeDoc({ id: 'c', related: ['a'] })
+			makeDoc({ id: 'c', related: ['a'] }),
 		];
 		const { edges } = buildGraph(docs);
 		expect(edges).toHaveLength(3);
@@ -108,11 +104,20 @@ describe('buildGraph', () => {
 
 	it('skips edges to missing nodes in force simulation', () => {
 		const nodes: GraphNode[] = [
-			{ id: 'a', kind: 'note', status: 'active', title: 'A', x: 0, y: 0, vx: 0, vy: 0 }
+			{
+				id: 'a',
+				kind: 'note',
+				status: 'active',
+				title: 'A',
+				x: 0,
+				y: 0,
+				vx: 0,
+				vy: 0,
+			},
 		];
 		const edges: GraphEdge[] = [
 			{ source: 'a', target: 'nonexistent', kind: 'related' },
-			{ source: 'nonexistent', target: 'a', kind: 'related' }
+			{ source: 'nonexistent', target: 'a', kind: 'related' },
 		];
 		const result = runForceSimulation(nodes, edges, 800, 600, 10);
 		expect(result).toHaveLength(1);
@@ -122,8 +127,26 @@ describe('buildGraph', () => {
 describe('runForceSimulation', () => {
 	it('returns nodes with updated positions', () => {
 		const nodes: GraphNode[] = [
-			{ id: 'a', kind: 'note', status: 'active', title: 'A', x: 0, y: 0, vx: 0, vy: 0 },
-			{ id: 'b', kind: 'note', status: 'active', title: 'B', x: 0, y: 0, vx: 0, vy: 0 }
+			{
+				id: 'a',
+				kind: 'note',
+				status: 'active',
+				title: 'A',
+				x: 0,
+				y: 0,
+				vx: 0,
+				vy: 0,
+			},
+			{
+				id: 'b',
+				kind: 'note',
+				status: 'active',
+				title: 'B',
+				x: 0,
+				y: 0,
+				vx: 0,
+				vy: 0,
+			},
 		];
 		const edges: GraphEdge[] = [{ source: 'a', target: 'b', kind: 'related' }];
 		const result = runForceSimulation(nodes, edges, 800, 600, 10);
@@ -134,7 +157,16 @@ describe('runForceSimulation', () => {
 
 	it('clamps nodes within bounds', () => {
 		const nodes: GraphNode[] = [
-			{ id: 'a', kind: 'note', status: 'active', title: 'A', x: 0, y: 0, vx: 0, vy: 0 }
+			{
+				id: 'a',
+				kind: 'note',
+				status: 'active',
+				title: 'A',
+				x: 0,
+				y: 0,
+				vx: 0,
+				vy: 0,
+			},
 		];
 		const result = runForceSimulation(nodes, [], 100, 100, 10);
 		expect(result[0].x).toBeGreaterThanOrEqual(30);
@@ -143,7 +175,16 @@ describe('runForceSimulation', () => {
 
 	it('handles single node', () => {
 		const nodes: GraphNode[] = [
-			{ id: 'a', kind: 'note', status: 'active', title: 'A', x: 0, y: 0, vx: 0, vy: 0 }
+			{
+				id: 'a',
+				kind: 'note',
+				status: 'active',
+				title: 'A',
+				x: 0,
+				y: 0,
+				vx: 0,
+				vy: 0,
+			},
 		];
 		const result = runForceSimulation(nodes, [], 800, 600, 10);
 		expect(result).toHaveLength(1);

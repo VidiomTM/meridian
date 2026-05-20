@@ -1,34 +1,34 @@
 <script lang="ts">
-	import type { MeridianDoc } from '$lib/meridian/format.js';
-	import { trapFocus } from '$lib/a11y/trap-focus.js';
+import { trapFocus } from '$lib/a11y/trap-focus.js';
+import type { MeridianDoc } from '$lib/meridian/format.js';
 
-	let {
-		doc,
-		onclose
-	}: {
-		doc: MeridianDoc;
-		onclose: () => void;
-	} = $props();
+let {
+	doc,
+	onclose,
+}: {
+	doc: MeridianDoc;
+	onclose: () => void;
+} = $props();
 
-	// Source context is synthesized from the OpenSpec artifact path.
-	interface HistoryEntry {
-		date: string;
-		author: string;
-		message: string;
-		diff?: { adds: string[]; removes: string[] };
-	}
+// Source context is synthesized from the OpenSpec artifact path.
+interface HistoryEntry {
+	date: string;
+	author: string;
+	message: string;
+	diff?: { adds: string[]; removes: string[] };
+}
 
-	const entries = $derived<HistoryEntry[]>([
-		{
-			date: doc.date ?? new Date().toISOString().split('T')[0],
-			author: 'OpenSpec',
-			message: `${doc.status} ${doc.kind}`,
-			diff: {
-				adds: [doc.filePath],
-				removes: []
-			}
-		}
-	]);
+const entries = $derived<HistoryEntry[]>([
+	{
+		date: doc.date ?? new Date().toISOString().split('T')[0],
+		author: 'OpenSpec',
+		message: `${doc.status} ${doc.kind}`,
+		diff: {
+			adds: [doc.filePath],
+			removes: [],
+		},
+	},
+]);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

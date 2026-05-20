@@ -1,10 +1,10 @@
-import { json, error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
-import { writeOpenSpecDoc } from '$lib/meridian/corpus.js';
+import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';
+import { writeOpenSpecDoc } from '$lib/meridian/corpus.js';
+import type { RequestHandler } from './$types';
 
 const SaveBody = z.object({
-	body: z.string()
+	body: z.string(),
 });
 
 export const PUT: RequestHandler = async ({ params, request }) => {

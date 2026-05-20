@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { DocStatus, DocKind, ExternalLink, MeridianDoc, InvEntry, STATUS_LABELS, KIND_LABELS, REL_COLORS, REL_LABELS } from './format.js';
+import { describe, expect, it } from 'vitest';
+import {
+	DocKind,
+	DocStatus,
+	ExternalLink,
+	InvEntry,
+	KIND_LABELS,
+	MeridianDoc,
+	REL_COLORS,
+	REL_LABELS,
+	STATUS_LABELS,
+} from './format.js';
 
 describe('DocStatus', () => {
 	it('accepts valid statuses', () => {
@@ -38,7 +48,11 @@ describe('ExternalLink', () => {
 	});
 
 	it('accepts optional title', () => {
-		const link = ExternalLink.parse({ kind: 'docs', ref: 'https://docs.example.com', title: 'Docs' });
+		const link = ExternalLink.parse({
+			kind: 'docs',
+			ref: 'https://docs.example.com',
+			title: 'Docs',
+		});
 		expect(link.title).toBe('Docs');
 	});
 });
@@ -51,7 +65,7 @@ describe('MeridianDoc', () => {
 		status: 'active',
 		body: '<p>hello</p>',
 		rawBody: '# Hello',
-		filePath: '/path/to/doc.md'
+		filePath: '/path/to/doc.md',
 	};
 
 	it('parses a minimal document', () => {
@@ -68,7 +82,12 @@ describe('MeridianDoc', () => {
 	});
 
 	it('accepts optional fields', () => {
-		const doc = MeridianDoc.parse({ ...base, project: 'my-project', description: 'A test', date: '2025-01-01' });
+		const doc = MeridianDoc.parse({
+			...base,
+			project: 'my-project',
+			description: 'A test',
+			date: '2025-01-01',
+		});
 		expect(doc.project).toBe('my-project');
 		expect(doc.description).toBe('A test');
 		expect(doc.date).toBe('2025-01-01');
@@ -87,7 +106,7 @@ describe('InvEntry', () => {
 		const entry = InvEntry.parse({
 			contained_by: ['a', 'b'],
 			contains_inv: ['c'],
-			related_from: ['d']
+			related_from: ['d'],
 		});
 		expect(entry.contained_by).toEqual(['a', 'b']);
 		expect(entry.contains_inv).toEqual(['c']);
@@ -97,7 +116,12 @@ describe('InvEntry', () => {
 
 describe('STATUS_LABELS', () => {
 	it('has labels for all statuses', () => {
-		const statuses: Array<import('./format.js').DocStatus> = ['active', 'canonical', 'archived', 'legacy'];
+		const statuses: Array<import('./format.js').DocStatus> = [
+			'active',
+			'canonical',
+			'archived',
+			'legacy',
+		];
 		for (const s of statuses) {
 			expect(STATUS_LABELS[s]).toBeTruthy();
 		}
@@ -106,7 +130,15 @@ describe('STATUS_LABELS', () => {
 
 describe('KIND_LABELS', () => {
 	it('has labels for all kinds', () => {
-		const kinds: Array<import('./format.js').DocKind> = ['proposal', 'design', 'tasks', 'adr', 'spec', 'tdd', 'note'];
+		const kinds: Array<import('./format.js').DocKind> = [
+			'proposal',
+			'design',
+			'tasks',
+			'adr',
+			'spec',
+			'tdd',
+			'note',
+		];
 		for (const k of kinds) {
 			expect(KIND_LABELS[k]).toBeTruthy();
 		}
@@ -115,7 +147,14 @@ describe('KIND_LABELS', () => {
 
 describe('REL_COLORS / REL_LABELS', () => {
 	it('has entries for all relation types', () => {
-		const keys = ['contains', 'part_of', 'related', 'contained_by', 'contains_inv', 'related_from'];
+		const keys = [
+			'contains',
+			'part_of',
+			'related',
+			'contained_by',
+			'contains_inv',
+			'related_from',
+		];
 		for (const k of keys) {
 			expect(REL_COLORS[k]).toBeTruthy();
 			expect(REL_LABELS[k]).toBeTruthy();

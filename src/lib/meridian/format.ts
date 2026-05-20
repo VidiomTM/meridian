@@ -3,13 +3,21 @@ import { z } from 'zod';
 export const DocStatus = z.enum(['active', 'canonical', 'archived', 'legacy']);
 export type DocStatus = z.infer<typeof DocStatus>;
 
-export const DocKind = z.enum(['proposal', 'design', 'tasks', 'adr', 'spec', 'tdd', 'note']);
+export const DocKind = z.enum([
+	'proposal',
+	'design',
+	'tasks',
+	'adr',
+	'spec',
+	'tdd',
+	'note',
+]);
 export type DocKind = z.infer<typeof DocKind>;
 
 export const ExternalLink = z.object({
 	kind: z.enum(['github', 'docs', 'other']),
 	ref: z.string(),
-	title: z.string().optional()
+	title: z.string().optional(),
 });
 export type ExternalLink = z.infer<typeof ExternalLink>;
 
@@ -31,14 +39,14 @@ export const MeridianDoc = z.object({
 	rawBody: z.string(),
 	filePath: z.string(),
 	contentType: z.enum(['markdown', 'yaml']).default('markdown'),
-	source: z.enum(['openspec', 'legacy']).default('openspec')
+	source: z.enum(['openspec', 'legacy']).default('openspec'),
 });
 export type MeridianDoc = z.infer<typeof MeridianDoc>;
 
 export const InvEntry = z.object({
 	contained_by: z.array(z.string()).default([]),
 	contains_inv: z.array(z.string()).default([]),
-	related_from: z.array(z.string()).default([])
+	related_from: z.array(z.string()).default([]),
 });
 export type InvEntry = z.infer<typeof InvEntry>;
 
@@ -46,7 +54,7 @@ export const STATUS_LABELS: Record<DocStatus, string> = {
 	active: 'Active',
 	canonical: 'Canonical',
 	archived: 'Archived',
-	legacy: 'Legacy'
+	legacy: 'Legacy',
 };
 
 export const KIND_LABELS: Record<DocKind, string> = {
@@ -56,7 +64,7 @@ export const KIND_LABELS: Record<DocKind, string> = {
 	adr: 'ADR',
 	spec: 'Spec',
 	tdd: 'TDD',
-	note: 'Note'
+	note: 'Note',
 };
 
 export const REL_COLORS: Record<string, string> = {
@@ -65,7 +73,7 @@ export const REL_COLORS: Record<string, string> = {
 	related: 'var(--rel-related)',
 	contained_by: 'var(--rel-depends)',
 	contains_inv: 'var(--rel-implements)',
-	related_from: 'var(--rel-related)'
+	related_from: 'var(--rel-related)',
 };
 
 export const REL_LABELS: Record<string, string> = {
@@ -74,5 +82,5 @@ export const REL_LABELS: Record<string, string> = {
 	related: 'Related',
 	contained_by: 'Contained By',
 	contains_inv: 'Contains',
-	related_from: 'Related From'
+	related_from: 'Related From',
 };

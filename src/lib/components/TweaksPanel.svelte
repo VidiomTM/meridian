@@ -1,20 +1,21 @@
 <script lang="ts">
-	import { trapFocus } from '$lib/a11y/trap-focus.js';
-	let {
-		theme,
-		density,
-		bodyType,
-		graphLayout,
-		onclose,
-		onchange
-	}: {
-		theme: string;
-		density: string;
-		bodyType: string;
-		graphLayout: string;
-		onclose: () => void;
-		onchange: (key: string, value: string) => void;
-	} = $props();
+import { trapFocus } from '$lib/a11y/trap-focus.js';
+
+let {
+	theme,
+	density,
+	bodyType,
+	graphLayout,
+	onclose,
+	onchange,
+}: {
+	theme: string;
+	density: string;
+	bodyType: string;
+	graphLayout: string;
+	onclose: () => void;
+	onchange: (key: string, value: string) => void;
+} = $props();
 </script>
 
 <div class="tweaks-panel" use:trapFocus role="dialog" aria-modal="true" aria-labelledby="tweaks-title">
