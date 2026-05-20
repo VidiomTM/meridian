@@ -2,6 +2,7 @@
 	"name": "meridian",
 	"private": true,
 	"version": "0.0.1",
+	"packageManager": "pnpm@9.15.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
