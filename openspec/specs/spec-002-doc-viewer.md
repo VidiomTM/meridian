@@ -9,7 +9,7 @@ priority: high
 
 ## Overview
 
-The core reading experience. Users view rendered markdown documents (ADRs, specs, TDDs, designs) with a sidebar showing related documents, composition hierarchy, and external links. Internal cross-references (`[ref-id]`) are hyperlinked for navigation within the same project.
+The core reading experience. Users view rendered markdown documents (ADRs, specs, TDDs, designs) with a sidebar showing related documents, composition hierarchy, and external links. Internal cross-references (`{{DOC_ID}}`) are hyperlinked for navigation within the same project.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ The core reading experience. Users view rendered markdown documents (ADRs, specs
    - ID, title, kind (with colored badge), status, date, authors
    - Tags as small pills below the header
 
-3. **R3 — Cross-reference links**: Any text matching `[doc-id]` or `[doc-id#section]` in the document body becomes a clickable link to `/[project]/[doc-id]`. Links to non-existent docs show a muted/dead-link style.
+3. **R3 — Cross-reference links**: Any text matching `{{DOC_ID}}` in the document body becomes a clickable link to `/[project]/[DOC_ID]`. IDs are uppercase and may contain alphanumerics, dots, colons, hyphens, and underscores. Links to non-existent docs show a muted/dead-link style as `<code class="xref-unknown">`.
 
 4. **R4 — Relations sidebar**: Right sidebar showing:
    - **Related docs**: Documents listed in the `related` frontmatter field
@@ -45,16 +45,16 @@ The core reading experience. Users view rendered markdown documents (ADRs, specs
 
 - [ ] **AC1**: Markdown body renders with correct heading hierarchy and styled code blocks
 - [ ] **AC2**: Frontmatter badge shows correct kind color (ADR=blue, Spec=green, TDD=orange, etc.)
-- [ ] **AC3**: `[adr-001]` in body is a clickable link to the ADR document
-- [ ] **AC4**: `[adr-001#decision]` links to the #decision anchor in adr-001
+- [ ] **AC3**: `{{ADR-001}}` in body is a clickable link to the ADR document
+- [ ] **AC4**: Cross-reference links render as `<a class="xref-chip">` elements with status badges (no anchor/section linking currently supported)
 - [ ] **AC5**: Relations sidebar shows related, parent, and child docs correctly
 - [ ] **AC6**: Clicking a relation navigates without full page reload
-- [ ] **AC7**: Non-existent cross-reference renders as muted/disabled link
+- [ ] **AC7**: Non-existent cross-reference renders as `<code class="xref-unknown">` (muted inline code)
 
 ## Technical Approach
 
 - Route: `/[project]/[docId]` (exists with `DocView` + `Relations` components)
 - Parser: `src/lib/meridian/parser.ts` (exists) — parses frontmatter + markdown body
-- Cross-references: Regex `\[([a-zA-Z0-9_-]+)(?:#([a-zA-Z0-9_-]+))?\]` in rendered HTML, replaced with `<a>` tags
+- Cross-references: Regex `/\{\{([A-Z0-9._:-]+)\}\}/g` in rendered HTML, replaced with `<a>` tags
 - Relations: Built from `corpus.ts` inverted index (`byId` map)
 - Layout: CSS Grid with `doc-pane` (main) and `relations-rail` (sidebar)

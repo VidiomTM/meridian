@@ -23,11 +23,11 @@ Build **Meridian** — a SvelteKit 5 web app that:
 4. Provides graph views (force-directed + radial) for exploring relationships
 5. Tracks changes as living documents that reflect what's actively being built
 
-Meridian is a **read-only browser** — it does not edit, create, or manage documents. It reads what exists and makes it navigable.
+Meridian is a **browser with inline editing** — it can edit OpenSpec artifact bodies in-place via the document viewer, but it does not create, delete, or manage documents. It reads what exists, makes it navigable, and allows quick edits to artifact content.
 
 ### Non-goals
 
-- Document creation/editing — use your editor
+- Document creation/deletion — use your editor
 - Real-time collaboration — use version control
 - Authentication/authorization — local-first, single user
 - Cloud sync — stateless, reads from local git repos
@@ -44,7 +44,7 @@ Meridian is a **read-only browser** — it does not edit, create, or manage docu
 **Negative:**
 
 - Requires filesystem access to local clones — not a remote-first tool
-- Read-only means no workflow integration (no "approve this ADR" in-app)
+- Inline editing is limited to artifact body content — no workflow integration (no "approve this ADR" in-app)
 - Markdown parsing fidelity depends on consistent frontmatter conventions
 
 **Neutral:**
