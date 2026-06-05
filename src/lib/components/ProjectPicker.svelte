@@ -54,7 +54,7 @@ function relativeDate(dateStr: string): string {
 			</div>
 			<h2 class="picker-empty-title">No OpenSpec workspaces found</h2>
 			<p class="picker-empty-text">
-				Meridian scans <code>CODEX_ROOT</code> for directories containing
+				Meridian scans <code>MERIDIAN_ROOT</code> for directories containing
 				a <code>openspec/</code> folder. No such directories were found.
 			</p>
 			<p class="picker-empty-text">
