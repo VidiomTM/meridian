@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test';
 test('homepage shows project picker shell', async ({ page }) => {
 	await page.goto('/');
 	// App shell visible
-	await expect(page.locator('.topbar')).toBeVisible();
-	await expect(page.locator('.statusbar')).toBeVisible();
+	await expect(page.getByRole('banner')).toBeVisible();
+	await expect(page.getByRole('contentinfo')).toBeVisible();
 	// Breadcrumb shows "Meridian"
-	await expect(page.getByRole('link', { name: 'Meridian' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Meridian', exact: true })).toBeVisible();
 	// Picker heading visible
 	await expect(
 		page.getByRole('heading', { name: /choose a project/i }),
@@ -22,9 +22,9 @@ test('project picker shows empty state when no projects found', async ({
 		page.getByRole('heading', { name: /no openspec workspaces found/i }),
 	).toBeVisible();
 	// No project cards rendered
-	await expect(page.locator('.picker-card')).toHaveCount(0);
+	await expect(page.getByRole('article')).toHaveCount(0);
 	// Keyboard shortcut hint present
-	await expect(page.getByText(/⌘K/)).toBeVisible();
+	await expect(page.locator('#doc-main').getByText('⌘K')).toBeVisible();
 });
 
 test('search input is not shown when no projects exist', async ({ page }) => {
