@@ -6,8 +6,8 @@ import type { DocKind, DocStatus, MeridianDoc } from './format.js';
 import { extractTitle, renderMarkdown, splitFrontmatter } from './parser.js';
 import { buildInvIndex } from './relations.js';
 
-const CODEX_ROOT =
-	process.env.CODEX_ROOT ?? '/Users/jonathangadeaharder/projects';
+const MERIDIAN_ROOT =
+	process.env.MERIDIAN_ROOT ?? '/Users/jonathangadeaharder/projects';
 const ARTIFACT_FILES = new Set(['proposal.md', 'design.md', 'tasks.md']);
 
 function walkDir(dir: string, ext = '.md'): string[] {
@@ -39,7 +39,7 @@ function titleFromSlug(input: string): string {
 
 function getProjectId(openspecRoot: string): string {
 	const projectRoot = dirname(openspecRoot);
-	const rel = relative(CODEX_ROOT, projectRoot);
+	const rel = relative(MERIDIAN_ROOT, projectRoot);
 	return rel.split(sep).filter(Boolean).join('~') || basename(projectRoot);
 }
 
@@ -178,9 +178,9 @@ function findOpenSpecRoots(dir: string): string[] {
 
 function collectOpenSpecArtifacts(): RawArtifact[] {
 	const artifacts: RawArtifact[] = [];
-	if (!existsSync(CODEX_ROOT)) return artifacts;
+	if (!existsSync(MERIDIAN_ROOT)) return artifacts;
 
-	for (const openspecRoot of findOpenSpecRoots(CODEX_ROOT)) {
+	for (const openspecRoot of findOpenSpecRoots(MERIDIAN_ROOT)) {
 		const project = getProjectId(openspecRoot);
 
 		const configPath = join(openspecRoot, 'config.yaml');

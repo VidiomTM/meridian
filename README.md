@@ -18,10 +18,10 @@ OpenSpec files live under `openspec/`. Meridian reads these artifacts but does n
 ## Development
 
 ```sh
-npm install
-npm run dev
-npm run check
-npm run build
+pnpm install
+pnpm run dev
+pnpm run check
+pnpm run build
 ```
 
-By default Meridian scans `/Users/jonathangadeaharder/projects` for projects with an `openspec/` directory. Override that root with `CODEX_ROOT`.
+By default Meridian scans `/Users/jonathangadeaharder/projects` for projects with an `openspec/` directory. Override that root with `MERIDIAN_ROOT`.
