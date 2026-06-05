@@ -42,8 +42,8 @@ The homepage of Meridian. Users see a list of discovered OpenSpec workspace proj
 
 ## Technical Approach
 
-- Route: `/` (already exists with `ProjectPicker` component stub)
+- Route: `/` (exists with `ProjectPicker` component)
 - Component: `src/lib/components/ProjectPicker.svelte`
-- Data flow: `+page.server.ts` → calls scanner → returns `{ projects: ScannedProject[] }`
+- Data flow: `+page.server.ts` → calls scanner → returns `{ projects: ProjectSummary[] }`
 - Styling: CSS Grid with `grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))`
-- The `ProjectPicker` component exists but is a stub — needs project card rendering, empty state, and search
+- The `ProjectPicker` component is fully implemented with project card rendering, empty state, and search

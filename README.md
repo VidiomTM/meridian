@@ -1,6 +1,6 @@
 # Meridian
 
-Meridian is a read-only visual browser for OpenSpec workspaces. OpenSpec owns the planning workflow and artifact lifecycle; Meridian adds navigation, search, rendering, and graph views across local projects.
+Meridian is a visual browser for OpenSpec workspaces. OpenSpec owns the planning workflow and artifact lifecycle; Meridian adds navigation, search, rendering, graph views, and inline editing across local projects.
 
 ## OpenSpec Workflow
 
@@ -13,7 +13,7 @@ openspec status
 /opsx:archive
 ```
 
-OpenSpec files live under `openspec/`. Meridian reads these artifacts but does not edit, accept, annotate, archive, or synchronize them. Use the OpenSpec commands for all workflow actions.
+OpenSpec files live under `openspec/`. Meridian reads and can inline-edit artifact bodies, but does not create, accept, annotate, archive, or synchronize documents. Use the OpenSpec commands for all workflow actions.
 
 ## Development
 
