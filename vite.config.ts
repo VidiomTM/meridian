@@ -5,6 +5,7 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	server: {
 		host: true,
-		port: Number(process.env.MERIDIAN_PORT ?? 5174)
+		port: Number(process.env.MERIDIAN_PORT ?? 5174),
+		allowedHosts: true,
 	}
 });
