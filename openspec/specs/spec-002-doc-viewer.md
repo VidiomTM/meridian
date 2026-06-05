@@ -24,7 +24,7 @@ The core reading experience. Users view rendered markdown documents (ADRs, specs
    - ID, title, kind (with colored badge), status, date, authors
    - Tags as small pills below the header
 
-3. **R3 — Cross-reference links**: Any text matching `{{DOC_ID}}` in the document body becomes a clickable link to `/[project]/[DOC_ID]`. IDs are uppercase and may contain alphanumerics, dots, colons, and hyphens. Links to non-existent docs show a muted/dead-link style as `<code class="xref-unknown">`.
+3. **R3 — Cross-reference links**: Any text matching `{{DOC_ID}}` in the document body becomes a clickable link to `/[project]/[DOC_ID]`. IDs are uppercase and may contain alphanumerics, dots, colons, hyphens, and underscores. Links to non-existent docs show a muted/dead-link style as `<code class="xref-unknown">`.
 
 4. **R4 — Relations sidebar**: Right sidebar showing:
    - **Related docs**: Documents listed in the `related` frontmatter field

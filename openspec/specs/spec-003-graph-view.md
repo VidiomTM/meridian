@@ -42,12 +42,12 @@ Interactive visualization of document relationships. Two modes:
 
 ## Acceptance Criteria
 
-- [ ] **AC1**: Force-directed layout stabilizes within 2 seconds for <50 nodes
+- [ ] **AC1**: Force-directed layout stabilizes within configured iteration/alpha cutoff for <60 nodes
 - [ ] **AC2**: Nodes are rendered with kind-specific shapes (rect=spec, diamond=tasks, circle=others) and status-coded colors
 - [ ] **AC3**: Hovering a node highlights its connections and dims others
 - [ ] **AC4**: Clicking a node navigates to that document
 - [ ] **AC5**: Radial view places the focus node at center with other nodes distributed on an ellipse
-- [ ] **AC6**: Legend is always visible showing node shapes, edge kinds, and status colors
+- [ ] **AC6**: Legend is always visible showing node shapes (including tasks/diamond), edge kinds, and status colors
 - [ ] **AC7**: Web Worker handles simulation for 60+ nodes without blocking main thread
 
 ## Technical Approach
