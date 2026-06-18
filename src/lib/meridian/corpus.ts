@@ -154,60 +154,53 @@ interface RawArtifact {
 	classification: NonNullable<ReturnType<typeof classifyOpenSpec>>;
 }
 
-function findOpenSpecRoots(dir: string): string[] {
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'build']);
+
+function shouldSkipDir(name: string): boolean {
+	return name.startsWith('.') || SKIP_DIRS.has(name);
+}
+
+function walkDirs(dir: string): string[] {
 	if (!existsSync(dir)) return [];
-	const roots: string[] = [];
+	const dirs: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-		if (
-			entry.name.startsWith('.') ||
-			entry.name === 'node_modules' ||
-			entry.name === 'dist' ||
-			entry.name === 'build'
-		)
-			continue;
-		const full = join(dir, entry.name);
-		if (entry.name === 'openspec') {
+		if (!entry.isDirectory() || shouldSkipDir(entry.name)) continue;
+		dirs.push(join(dir, entry.name));
+	}
+	return dirs;
+}
+
+function findOpenSpecRoots(dir: string): string[] {
+	const roots: string[] = [];
+	for (const full of walkDirs(dir)) {
+		if (basename(full) === 'openspec') {
 			roots.push(full);
-			continue;
+		} else {
+			roots.push(...findOpenSpecRoots(full));
 		}
-		roots.push(...findOpenSpecRoots(full));
 	}
 	return roots;
 }
 
+const DOC_KIND_MAP: Record<string, 'adr' | 'spec' | 'tdd'> = {
+	adrs: 'adr',
+	specs: 'spec',
+	tdd: 'tdd',
+};
+
 function findDocRoots(
 	dir: string,
 ): Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> {
-	if (!existsSync(dir)) return [];
 	const results: Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> = [];
-	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-		if (
-			entry.name.startsWith('.') ||
-			entry.name === 'node_modules' ||
-			entry.name === 'dist' ||
-			entry.name === 'build'
-		)
-			continue;
-		const full = join(dir, entry.name);
-		if (entry.name !== 'docs') {
+	for (const full of walkDirs(dir)) {
+		if (basename(full) !== 'docs') {
 			results.push(...findDocRoots(full));
 			continue;
 		}
-		// Found a docs/ directory — check for adrs/, specs/, tdd/
-		for (const docSubdir of readdirSync(full, { withFileTypes: true })) {
-			if (!docSubdir.isDirectory()) continue;
-			const kind =
-				docSubdir.name === 'adrs'
-					? ('adr' as const)
-					: docSubdir.name === 'specs'
-						? ('spec' as const)
-						: docSubdir.name === 'tdd'
-							? ('tdd' as const)
-							: null;
+		for (const docSubdir of walkDirs(full)) {
+			const kind = DOC_KIND_MAP[basename(docSubdir)];
 			if (kind) {
-				results.push({ root: join(full, docSubdir.name), kind });
+				results.push({ root: docSubdir, kind });
 			}
 		}
 	}
