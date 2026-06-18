@@ -176,6 +176,51 @@ function findOpenSpecRoots(dir: string): string[] {
 	return roots;
 }
 
+function findDocRoots(
+	dir: string,
+): Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> {
+	if (!existsSync(dir)) return [];
+	const results: Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> = [];
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (!entry.isDirectory()) continue;
+		if (
+			entry.name.startsWith('.') ||
+			entry.name === 'node_modules' ||
+			entry.name === 'dist' ||
+			entry.name === 'build'
+		)
+			continue;
+		const full = join(dir, entry.name);
+		if (entry.name !== 'docs') {
+			results.push(...findDocRoots(full));
+			continue;
+		}
+		// Found a docs/ directory — check for adrs/, specs/, tdd/
+		for (const docSubdir of readdirSync(full, { withFileTypes: true })) {
+			if (!docSubdir.isDirectory()) continue;
+			const kind =
+				docSubdir.name === 'adrs'
+					? ('adr' as const)
+					: docSubdir.name === 'specs'
+						? ('spec' as const)
+						: docSubdir.name === 'tdd'
+							? ('tdd' as const)
+							: null;
+			if (kind) {
+				results.push({ root: join(full, docSubdir.name), kind });
+			}
+		}
+	}
+	return results;
+}
+
+function getProjectDir(artifactRoot: string): string {
+	// artifactRoot is e.g. /projects/meta-router/openspec or /projects/meta-router/docs/adrs
+	const parent = dirname(artifactRoot);
+	if (basename(parent) === 'docs') return dirname(parent);
+	return parent;
+}
+
 function collectOpenSpecArtifacts(): RawArtifact[] {
 	const artifacts: RawArtifact[] = [];
 	if (!existsSync(MERIDIAN_ROOT)) return artifacts;
@@ -194,6 +239,27 @@ function collectOpenSpecArtifacts(): RawArtifact[] {
 			const classification = classifyOpenSpec(filePath, openspecRoot);
 			if (!classification) continue;
 			artifacts.push({ path: filePath, project, classification });
+		}
+	}
+
+	// Also discover docs/adrs/, docs/specs/, docs/tdd/ outside openspec/ trees
+	for (const { root, kind } of findDocRoots(MERIDIAN_ROOT)) {
+		const projectDir = getProjectDir(root);
+		const rel = relative(MERIDIAN_ROOT, projectDir);
+		const project =
+			rel.split(sep).filter(Boolean).join('~') || basename(projectDir);
+		for (const filePath of walkDir(root)) {
+			const id = `spec-imported-${kind}-${slug(basename(filePath))}`;
+			artifacts.push({
+				path: filePath,
+				project,
+				classification: {
+					id,
+					kind,
+					status: 'canonical',
+					tags: ['openspec', kind, 'imported'],
+				},
+			});
 		}
 	}
 
