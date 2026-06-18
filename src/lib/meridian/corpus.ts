@@ -157,7 +157,7 @@ interface RawArtifact {
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build']);
 
 function shouldSkipDir(name: string): boolean {
-	return name.startsWith('.') || SKIP_DIRS.has(name);
+	return name.startsWith('.') || SKIP_DIRS.has(name) || name === 'openspec';
 }
 
 function walkDirs(dir: string): string[] {
@@ -242,7 +242,8 @@ function collectOpenSpecArtifacts(): RawArtifact[] {
 		const project =
 			rel.split(sep).filter(Boolean).join('~') || basename(projectDir);
 		for (const filePath of walkDir(root)) {
-			const id = `spec-imported-${kind}-${slug(basename(filePath))}`;
+			const relPath = relative(root, filePath);
+			const id = `spec-imported-${kind}-${slug(relPath)}`;
 			artifacts.push({
 				path: filePath,
 				project,
