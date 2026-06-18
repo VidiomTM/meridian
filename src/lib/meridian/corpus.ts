@@ -154,26 +154,64 @@ interface RawArtifact {
 	classification: NonNullable<ReturnType<typeof classifyOpenSpec>>;
 }
 
-function findOpenSpecRoots(dir: string): string[] {
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'build']);
+
+function shouldSkipDir(name: string): boolean {
+	return name.startsWith('.') || SKIP_DIRS.has(name) || name === 'openspec';
+}
+
+function walkDirs(dir: string): string[] {
 	if (!existsSync(dir)) return [];
-	const roots: string[] = [];
+	const dirs: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-		if (
-			entry.name.startsWith('.') ||
-			entry.name === 'node_modules' ||
-			entry.name === 'dist' ||
-			entry.name === 'build'
-		)
-			continue;
-		const full = join(dir, entry.name);
-		if (entry.name === 'openspec') {
+		if (!entry.isDirectory() || shouldSkipDir(entry.name)) continue;
+		dirs.push(join(dir, entry.name));
+	}
+	return dirs;
+}
+
+function findOpenSpecRoots(dir: string): string[] {
+	const roots: string[] = [];
+	for (const full of walkDirs(dir)) {
+		if (basename(full) === 'openspec') {
 			roots.push(full);
-			continue;
+		} else {
+			roots.push(...findOpenSpecRoots(full));
 		}
-		roots.push(...findOpenSpecRoots(full));
 	}
 	return roots;
+}
+
+const DOC_KIND_MAP: Record<string, 'adr' | 'spec' | 'tdd'> = {
+	adrs: 'adr',
+	specs: 'spec',
+	tdd: 'tdd',
+};
+
+function findDocRoots(
+	dir: string,
+): Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> {
+	const results: Array<{ root: string; kind: 'adr' | 'spec' | 'tdd' }> = [];
+	for (const full of walkDirs(dir)) {
+		if (basename(full) !== 'docs') {
+			results.push(...findDocRoots(full));
+			continue;
+		}
+		for (const docSubdir of walkDirs(full)) {
+			const kind = DOC_KIND_MAP[basename(docSubdir)];
+			if (kind) {
+				results.push({ root: docSubdir, kind });
+			}
+		}
+	}
+	return results;
+}
+
+function getProjectDir(artifactRoot: string): string {
+	// artifactRoot is e.g. /projects/meta-router/openspec or /projects/meta-router/docs/adrs
+	const parent = dirname(artifactRoot);
+	if (basename(parent) === 'docs') return dirname(parent);
+	return parent;
 }
 
 function collectOpenSpecArtifacts(): RawArtifact[] {
@@ -194,6 +232,28 @@ function collectOpenSpecArtifacts(): RawArtifact[] {
 			const classification = classifyOpenSpec(filePath, openspecRoot);
 			if (!classification) continue;
 			artifacts.push({ path: filePath, project, classification });
+		}
+	}
+
+	// Also discover docs/adrs/, docs/specs/, docs/tdd/ outside openspec/ trees
+	for (const { root, kind } of findDocRoots(MERIDIAN_ROOT)) {
+		const projectDir = getProjectDir(root);
+		const rel = relative(MERIDIAN_ROOT, projectDir);
+		const project =
+			rel.split(sep).filter(Boolean).join('~') || basename(projectDir);
+		for (const filePath of walkDir(root)) {
+			const relPath = relative(root, filePath);
+			const id = `spec-imported-${kind}-${slug(relPath)}`;
+			artifacts.push({
+				path: filePath,
+				project,
+				classification: {
+					id,
+					kind,
+					status: 'canonical',
+					tags: ['openspec', kind, 'imported'],
+				},
+			});
 		}
 	}
 

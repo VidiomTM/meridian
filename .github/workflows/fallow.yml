@@ -19,3 +19,4 @@ jobs:
           command: audit
           comment: true
           review-comments: true
+          config: fallow.toml
